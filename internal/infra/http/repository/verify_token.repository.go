@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"trivium/internal/presentation/dto"
+	"trivium/internal/common/types"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/auth"
@@ -40,13 +40,13 @@ func NewVerifyTokenRepository() (*VerifyTokenRepository, error) {
 	}, nil
 }
 
-func (f *VerifyTokenRepository) VerifyIdToken(ctx context.Context, token string) (dto.User, error) {
+func (f *VerifyTokenRepository) VerifyIdToken(ctx context.Context, token string) (types.User, error) {
 	tokenInfo, err := f.authClient.VerifyIDToken(ctx, token)
 	if err != nil {
-		return dto.User{}, fmt.Errorf("error verifying ID token: %v", err)
+		return types.User{}, fmt.Errorf("error verifying ID token: %v", err)
 	}
 
-	user := dto.User{
+	user := types.User{
 		Name:      tokenInfo.Claims["name"].(string),
 		Email:     tokenInfo.Claims["email"].(string),
 		PhotoPath: tokenInfo.Claims["picture"].(string),

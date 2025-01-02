@@ -2,9 +2,9 @@ package presentation_repositorier
 
 import (
 	"context"
-	"trivium/internal/presentation/dto"
+	"trivium/internal/common/types"
 )
 
 type VerifyTokenRepositorier interface {
-	VerifyIdToken(context context.Context, token string) (dto.User, error)
+	VerifyIdToken(context context.Context, token string) (types.User, error)
 }
