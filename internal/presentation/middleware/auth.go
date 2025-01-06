@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
-	presentation_repositorier "trivium/internal/presentation/repositorier"
+	"trivium/internal/presentation/repositorier"
 )
 
 type contextKey string
@@ -12,10 +12,10 @@ type contextKey string
 const userKey contextKey = "user"
 
 type Auth struct {
-	verifyTokenRepo presentation_repositorier.VerifyTokenRepositorier
+	verifyTokenRepo repositorier.VerifyTokenRepositorier
 }
 
-func NewAuth(verifyTokenRepo presentation_repositorier.VerifyTokenRepositorier) *Auth {
+func NewAuth(verifyTokenRepo repositorier.VerifyTokenRepositorier) *Auth {
 	return &Auth{
 		verifyTokenRepo: verifyTokenRepo,
 	}

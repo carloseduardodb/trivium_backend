@@ -13,7 +13,7 @@ func main() {
 	flag.Parse()
 
 	dsn := "host=localhost port=5432 user=postgres password=postgres dbname=mydatabase sslmode=disable"
-	migration, err := repository.NewMigration(dsn, "internal/infra/database/migration")
+	migration, err := repository.NewMigration(dsn, "internal/infra/database/postgres/migration")
 	if err != nil {
 		log.Fatalf("Failed to initialize migration: %v", err)
 	}
