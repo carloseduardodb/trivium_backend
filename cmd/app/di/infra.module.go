@@ -24,6 +24,10 @@ func NewVerifyTokenRepository() presentation_repositorier.VerifyTokenRepositorie
 	return repo
 }
 
+// func NewCryptoCurrencyRepository() repositorier.CryptoCurrencyRepositorier {
+// 	return repository.
+// }
+
 var InfraModule = wire.NewSet(
 	NewFirebaseRepository,
 	NewHttpRepository,

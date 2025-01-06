@@ -9,7 +9,11 @@ require (
 	google.golang.org/api v0.214.0
 )
 
-require github.com/pkg/errors v0.9.1 // indirect
+require (
+	github.com/jmoiron/sqlx v1.4.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+)
 
 require (
 	cel.dev/expr v0.16.1 // indirect
