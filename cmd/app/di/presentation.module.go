@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"trivium/internal/presentation/controller"
 	"trivium/internal/presentation/middleware"
 	presentation_repositorier "trivium/internal/presentation/repositorier"
@@ -28,7 +29,8 @@ func NewAppServer(auth *controller.AuthController, status *controller.StatusCont
 }
 
 func (a *AppServer) Start() error {
-	return route.NewRoutes(a.Router, a.AuthController, a.StatusController)
+	port := os.Getenv("PORT")
+	return route.NewRoutes(port, a.Router, a.AuthController, a.StatusController)
 }
 
 var PresentationModule = wire.NewSet(

@@ -6,14 +6,12 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/google/wire v0.6.0
 	github.com/gorilla/mux v1.8.1
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.214.0
 )
 
-require (
-	github.com/jmoiron/sqlx v1.4.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-)
+require github.com/pkg/errors v0.9.1 // indirect
 
 require (
 	cel.dev/expr v0.16.1 // indirect
