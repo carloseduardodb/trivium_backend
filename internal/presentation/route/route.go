@@ -8,6 +8,7 @@ import (
 )
 
 func NewRoutes(
+	port string,
 	router presentation_repositorier.HttpRepositorier,
 	authController *controller.AuthController,
 	statusController *controller.StatusController,
@@ -15,6 +16,10 @@ func NewRoutes(
 	authController.SetupRoutes(router)
 	statusController.SetupRoutes(router)
 
-	fmt.Println("Servidor iniciado em http://127.0.0.1:3000")
-	return router.Start("127.0.0.1:3000")
+	if port == "" {
+		port = "3000"
+	}
+
+	fmt.Println("Servidor iniciado na porta:", port)
+	return router.Start("127.0.0.1:" + port)
 }
