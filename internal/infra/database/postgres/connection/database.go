@@ -3,6 +3,7 @@ package connection
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/jmoiron/sqlx"
@@ -13,17 +14,21 @@ var instance *sqlx.DB
 
 var once sync.Once
 
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "yourusername"
-	password = "yourpassword"
-	dbname   = "yourdatabase"
-)
-
 func GetDB() *sqlx.DB {
+	var (
+		host     = os.Getenv("DATABASE_HOST")
+		port     = os.Getenv("DATABASE_PORT")
+		user     = os.Getenv("DATABASE_USER")
+		password = os.Getenv("DATABASE_PASSWORD")
+		dbname   = os.Getenv("DATABASE_NAME")
+	)
+
+	if host == "" || port == "" || user == "" || password == "" || dbname == "" {
+		log.Fatal("Error when trying to get database connection: missing environment variables")
+	}
+
 	once.Do(func() {
-		psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 			host, port, user, password, dbname)
 
 		db, err := sqlx.Open("postgres", psqlInfo)
@@ -42,7 +47,7 @@ func GetDB() *sqlx.DB {
 	return instance
 }
 
-func ExecuteQuery(query string, args ...interface{}) (*sqlx.Rows, error) {
+func ExecuteQuery(query string, args ...any) (*sqlx.Rows, error) {
 	db := GetDB()
 	defer CloseDB()
 
