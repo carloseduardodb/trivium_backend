@@ -2,17 +2,37 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"os"
 	"trivium/internal/infra/database/postgres/repository"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load("./.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	command := flag.String("command", "up", "migration command (up/down/status/create)")
 	name := flag.String("name", "", "name for new migration")
 	migType := flag.String("type", "sql", "migration type (sql/go)")
 	flag.Parse()
 
-	dsn := "host=localhost port=5432 user=postgres password=postgres dbname=mydatabase sslmode=disable"
+	var (
+		host     = os.Getenv("DATABASE_HOST")
+		port     = os.Getenv("DATABASE_PORT")
+		user     = os.Getenv("DATABASE_USER")
+		password = os.Getenv("DATABASE_PASSWORD")
+		dbname   = os.Getenv("DATABASE_NAME")
+	)
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname,
+	)
+
 	migration, err := repository.NewMigration(dsn, "internal/infra/database/postgres/migration")
 	if err != nil {
 		log.Fatalf("Failed to initialize migration: %v", err)

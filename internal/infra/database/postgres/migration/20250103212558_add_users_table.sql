@@ -10,21 +10,38 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Comentários da tabela Users
+COMMENT ON TABLE users IS 'Tabela que armazena os dados dos usuários';
+COMMENT ON COLUMN users.id IS 'Identificador único do usuário';
+COMMENT ON COLUMN users.name IS 'Nome do usuário';
+COMMENT ON COLUMN users.email IS 'E-mail do usuário, deve ser único';
+COMMENT ON COLUMN users.photo_path IS 'URL da foto do usuário';
+COMMENT ON COLUMN users.created_at IS 'Data de criação do registro';
+COMMENT ON COLUMN users.updated_at IS 'Data de atualização do registro, atualizado via função trigger';
+
 -- Create Cryptocurrencies table
 CREATE TABLE cryptocurrencies (
     id BIGSERIAL PRIMARY KEY,
-    user BIGINT NOT NULL REFERENCES users(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
     name VARCHAR(255) NOT NULL,
-    symbol VARCHAR(50) NOT NULL,
+    symbol VARCHAR(50) NOT NULL UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(symbol)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Comentários da tabela Cryptocurrencies
+COMMENT ON TABLE cryptocurrencies IS 'Tabela que armazena as criptomoedas cadastradas pelos usuários';
+COMMENT ON COLUMN cryptocurrencies.id IS 'Identificador único da criptomoeda';
+COMMENT ON COLUMN cryptocurrencies.user_id IS 'ID do usuário que cadastrou a criptomoeda';
+COMMENT ON COLUMN cryptocurrencies.name IS 'Nome da criptomoeda';
+COMMENT ON COLUMN cryptocurrencies.symbol IS 'Símbolo da criptomoeda, deve ser único';
+COMMENT ON COLUMN cryptocurrencies.created_at IS 'Data de criação do registro';
+COMMENT ON COLUMN cryptocurrencies.updated_at IS 'Data de atualização do registro, atualizado via função trigger';
 
 -- Create Positions table
 CREATE TABLE positions (
     id BIGSERIAL PRIMARY KEY,
-    user BIGINT NOT NULL REFERENCES users(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
     crypto_currency BIGINT NOT NULL REFERENCES cryptocurrencies(id),
     quantity DECIMAL(20,8) NOT NULL,
     purchase_price DECIMAL(20,2) NOT NULL,
@@ -35,6 +52,20 @@ CREATE TABLE positions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Comentários da tabela Positions
+COMMENT ON TABLE positions IS 'Tabela que armazena as posições de investimento dos usuários';
+COMMENT ON COLUMN positions.id IS 'Identificador único da posição';
+COMMENT ON COLUMN positions.user_id IS 'ID do usuário';
+COMMENT ON COLUMN positions.crypto_currency IS 'ID da criptomoeda associada';
+COMMENT ON COLUMN positions.quantity IS 'Quantidade de criptomoeda na posição';
+COMMENT ON COLUMN positions.purchase_price IS 'Preço de compra da criptomoeda';
+COMMENT ON COLUMN positions.invested_amount IS 'Valor total investido';
+COMMENT ON COLUMN positions.purchase_date IS 'Data de compra da criptomoeda';
+COMMENT ON COLUMN positions.last_profit_price IS 'Preço de venda da criptomoeda';
+COMMENT ON COLUMN positions.status IS 'Status da posição (ativo ou fechado)';
+COMMENT ON COLUMN positions.created_at IS 'Data de criação do registro';
+COMMENT ON COLUMN positions.updated_at IS 'Data de atualização do registro, atualizado via função trigger';
 
 -- Create Profit_Takes table
 CREATE TABLE profit_takes (
@@ -48,21 +79,32 @@ CREATE TABLE profit_takes (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Comentários da tabela Profit_Takes
+COMMENT ON TABLE profit_takes IS 'Tabela que armazena retiradas de lucro das posições dos usuários';
+COMMENT ON COLUMN profit_takes.id IS 'Identificador único da retirada';
+COMMENT ON COLUMN profit_takes.position IS 'ID da posição associada';
+COMMENT ON COLUMN profit_takes.amount_withdrawn IS 'Quantidade de criptomoeda retirada';
+COMMENT ON COLUMN profit_takes.price_at_withdraw IS 'Preço da criptomoeda no momento da retirada';
+COMMENT ON COLUMN profit_takes.remaining_value IS 'Quantidade restante na posição após a retirada';
+COMMENT ON COLUMN profit_takes.withdraw_date IS 'Data da retirada';
+COMMENT ON COLUMN profit_takes.created_at IS 'Data de criação do registro';
+COMMENT ON COLUMN profit_takes.updated_at IS 'Data de atualização do registro, atualizado via função trigger';
+
 -- Indexes
-CREATE INDEX idx_cryptocurrencies_user ON cryptocurrencies(user);
-CREATE INDEX idx_positions_user ON positions(user);
+CREATE INDEX idx_cryptocurrencies_user ON cryptocurrencies(user_id);
+CREATE INDEX idx_positions_user ON positions(user_id);
 CREATE INDEX idx_positions_crypto ON positions(crypto_currency);
 CREATE INDEX idx_profit_takes_position ON profit_takes(position);
-CREATE INDEX idx_positions_status ON positions(status);
+CREATE INDEX idx_positions_active_status ON positions(status) WHERE status = 'active';
 
 -- Trigger for updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
+    NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE 'plpgsql';
 
 -- Add triggers to all tables
 CREATE TRIGGER update_users_updated_at
@@ -88,5 +130,9 @@ CREATE TRIGGER update_profit_takes_updated_at
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+DROP TABLE IF EXISTS profit_takes;
+DROP TABLE IF EXISTS positions;
+DROP TABLE IF EXISTS cryptocurrencies;
+DROP TABLE IF EXISTS users;
+DROP FUNCTION IF EXISTS update_updated_at_column;
 -- +goose StatementEnd
