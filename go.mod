@@ -12,11 +12,16 @@ require (
 )
 
 require (
+	github.com/adshao/go-binance/v2 v2.8.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
+	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/oapi-codegen/runtime v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 )
 
 require (
