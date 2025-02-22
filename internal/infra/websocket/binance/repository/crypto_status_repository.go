@@ -2,6 +2,8 @@ package repository
 
 import (
 	"log"
+	"strconv"
+	"sync"
 	"time"
 
 	"trivium/internal/domain/repositorier"
@@ -17,14 +19,24 @@ func NewCryptoRepository() repositorier.CryptoStatusRepository {
 
 func (r *CryptoStatusRepositoryImpl) StreamCryptoData(cryptos []string) <-chan repositorier.CryptoData {
 	dataStream := make(chan repositorier.CryptoData)
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(1 * time.Second * 10)
+	var mu sync.Mutex
 
 	cryptoMap := make(map[string]repositorier.CryptoData)
 
 	wsHandler := func(event *binance.WsAggTradeEvent) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		price, err := strconv.ParseFloat(event.Price, 64)
+		if err != nil {
+			log.Println("Erro ao converter preço:", err)
+			return
+		}
+
 		data := repositorier.CryptoData{
 			Symbol: event.Symbol,
-			Price:  event.Price,
+			Price:  strconv.FormatFloat(price, 'f', 8, 64),
 			Volume: event.Quantity,
 		}
 
@@ -36,7 +48,8 @@ func (r *CryptoStatusRepositoryImpl) StreamCryptoData(cryptos []string) <-chan r
 	}
 
 	for _, crypto := range cryptos {
-		symbol := crypto + "usdt"
+		symbol := crypto + "USDT"
+
 		_, _, err := binance.WsAggTradeServe(symbol, wsHandler, errHandler)
 		if err != nil {
 			log.Printf("Erro ao conectar ao WebSocket da Binance para %s: %v\n", symbol, err)
@@ -47,11 +60,15 @@ func (r *CryptoStatusRepositoryImpl) StreamCryptoData(cryptos []string) <-chan r
 		defer ticker.Stop()
 		defer close(dataStream)
 		for range ticker.C {
+			mu.Lock()
 			for _, data := range cryptoMap {
 				dataStream <- data
 			}
+			mu.Unlock()
 		}
 	}()
+
+	log.Println("Conectado ao WebSocket da Binance para", cryptos)
 
 	return dataStream
 }
