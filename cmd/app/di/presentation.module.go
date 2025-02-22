@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"trivium/internal/presentation/controller"
+	"trivium/internal/presentation/event"
 	"trivium/internal/presentation/middleware"
 	presentation_repositorier "trivium/internal/presentation/repositorier"
 	"trivium/internal/presentation/route"
@@ -20,7 +21,10 @@ type AppServer struct {
 	Router           presentation_repositorier.HttpRepositorier
 }
 
-func NewAppServer(auth *controller.AuthController, status *controller.StatusController, router presentation_repositorier.HttpRepositorier) *AppServer {
+func NewAppServer(
+	auth *controller.AuthController,
+	status *controller.StatusController,
+	router presentation_repositorier.HttpRepositorier) *AppServer {
 	return &AppServer{
 		AuthController:   auth,
 		StatusController: status,
@@ -36,6 +40,7 @@ func (a *AppServer) Start() error {
 var PresentationModule = wire.NewSet(
 	controller.NewAuthController,
 	controller.NewStatusController,
+	event.NewCryptoWatchEvent,
 	middleware.NewAuth,
 	NewAppServer,
 	wire.Bind(new(ServerStarter), new(*AppServer)),
