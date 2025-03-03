@@ -22,7 +22,6 @@ COMMENT ON COLUMN users.updated_at IS 'Data de atualização do registro, atuali
 -- Create Cryptocurrencies table
 CREATE TABLE cryptocurrencies (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES users(id),
     name VARCHAR(255) NOT NULL,
     symbol VARCHAR(50) NOT NULL UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -32,7 +31,6 @@ CREATE TABLE cryptocurrencies (
 -- Comentários da tabela Cryptocurrencies
 COMMENT ON TABLE cryptocurrencies IS 'Tabela que armazena as criptomoedas cadastradas pelos usuários';
 COMMENT ON COLUMN cryptocurrencies.id IS 'Identificador único da criptomoeda';
-COMMENT ON COLUMN cryptocurrencies.user_id IS 'ID do usuário que cadastrou a criptomoeda';
 COMMENT ON COLUMN cryptocurrencies.name IS 'Nome da criptomoeda';
 COMMENT ON COLUMN cryptocurrencies.symbol IS 'Símbolo da criptomoeda, deve ser único';
 COMMENT ON COLUMN cryptocurrencies.created_at IS 'Data de criação do registro';
@@ -91,7 +89,6 @@ COMMENT ON COLUMN profit_takes.created_at IS 'Data de criação do registro';
 COMMENT ON COLUMN profit_takes.updated_at IS 'Data de atualização do registro, atualizado via função trigger';
 
 -- Indexes
-CREATE INDEX idx_cryptocurrencies_user ON cryptocurrencies(user_id);
 CREATE INDEX idx_positions_user ON positions(user_id);
 CREATE INDEX idx_positions_crypto ON positions(crypto_currency);
 CREATE INDEX idx_profit_takes_position ON profit_takes(position);

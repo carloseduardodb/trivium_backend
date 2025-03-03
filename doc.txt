@@ -1,0 +1,10 @@
+Users se relaciona com positions que é a posiçãodo usuário naquela cryptomoeda 
+junto com a quantidade comprada e preço da compra, cryptocurrencies é um registro unico
+para cada criptomoeda nova adicionada no sistema, ela que retorna as criptomoedas que vou 
+monitorar via sockets, profit_takes retorna as retiradas de lucro das posicoes dos usuarios 
+basicamente esta relacionada a posição, ele só vende as relações das posições por cryptomoeda.
+uma criptomoeda de um usuário pode ter N posições, e uma posição pode ter N retiradas.
+
+------------------------------------------------------------------------------------------------
+
+Criação de migration: make migrate-create name=adicionar_coluna type=sql

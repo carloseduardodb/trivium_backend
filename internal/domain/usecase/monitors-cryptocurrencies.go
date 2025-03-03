@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"log"
 	"trivium/internal/domain/repositorier"
 )
@@ -27,9 +26,6 @@ func (c *MonitorCryptoCurrencies) WatchCrypto() {
 	for i, crypto := range cryptoCurrencies {
 		cryptos[i] = crypto.Symbol
 	}
-
-	fmt.Println(cryptos)
-	fmt.Println("Olá")
 
 	dataChannel := cryptoEvent.WatchEvent(cryptos)
 

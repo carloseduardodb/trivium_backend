@@ -16,7 +16,7 @@ func (r *CryptoCurrencyRepository) Save(cryptoCurrency entity.CryptoCurrency) (e
 	db := connection.GetDB()
 	defer connection.CloseDB()
 
-	query := `INSERT INTO crypto_currencies (name, symbol, current_price) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO cryptocurrencies (name, symbol) VALUES ($1, $2) RETURNING id`
 	err := db.QueryRow(query, cryptoCurrency.Name, cryptoCurrency.Symbol).Scan(&cryptoCurrency.ID)
 	if err != nil {
 		return entity.CryptoCurrency{}, err
@@ -30,7 +30,7 @@ func (r *CryptoCurrencyRepository) FindById(id int64) (entity.CryptoCurrency, er
 	defer connection.CloseDB()
 
 	var cryptoCurrency entity.CryptoCurrency
-	err := db.QueryRowx("SELECT id, name, symbol, current_price FROM crypto_currencies WHERE id = $1", id).StructScan(&cryptoCurrency)
+	err := db.QueryRowx("SELECT id, name, symbol FROM cryptocurrencies WHERE id = $1", id).StructScan(&cryptoCurrency)
 	if err != nil {
 		return entity.CryptoCurrency{}, err
 	}
@@ -43,7 +43,7 @@ func (r *CryptoCurrencyRepository) FindAll() ([]entity.CryptoCurrency, error) {
 	defer connection.CloseDB()
 
 	cryptoCurrencies := []entity.CryptoCurrency{}
-	err := db.Select(&cryptoCurrencies, "SELECT id, name, symbol, current_price FROM crypto_currencies")
+	err := db.Select(&cryptoCurrencies, "SELECT id, name, symbol FROM cryptocurrencies")
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (r *CryptoCurrencyRepository) Update(cryptoCurrency entity.CryptoCurrency) 
 	db := connection.GetDB()
 	defer connection.CloseDB()
 
-	query := `UPDATE crypto_currencies SET name = $1, symbol = $2, WHERE id = $3`
+	query := `UPDATE cryptocurrencies SET name = $1, symbol = $2, WHERE id = $3`
 	result, err := db.Exec(query, cryptoCurrency.Name, cryptoCurrency.Symbol, cryptoCurrency.ID)
 	if err != nil {
 		return entity.CryptoCurrency{}, err
@@ -76,7 +76,7 @@ func (r *CryptoCurrencyRepository) Delete(id int64) error {
 	db := connection.GetDB()
 	defer connection.CloseDB()
 
-	result, err := db.Exec("DELETE FROM crypto_currencies WHERE id = $1", id)
+	result, err := db.Exec("DELETE FROM cryptocurrencies WHERE id = $1", id)
 	if err != nil {
 		return err
 	}

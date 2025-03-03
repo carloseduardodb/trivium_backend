@@ -16,4 +16,10 @@ migrate-status:
 	go run cmd/migrate/main.go status
 
 migrate-create:
-	go run cmd/migrate/main.go create $(name) sql
+	go run cmd/migrate/main.go -command=create:migration -name=$(name) -type=$(type)
+
+seed-create:
+	go run cmd/migrate/main.go -command=create:seed -name=$(name) -type=$(type)
+
+seed-up:
+	go run cmd/migrate/main.go -command=seed
