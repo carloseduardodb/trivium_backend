@@ -39,6 +39,12 @@ func main() {
 	}
 	defer migration.Close()
 
+	seed, err := repository.NewMigration(dsn, "internal/infra/database/postgres/seed")
+	if err != nil {
+		log.Fatalf("Failed to initialize migration: %v", err)
+	}
+	defer seed.Close()
+
 	switch *command {
 	case "up":
 		err = migration.Up()
@@ -46,11 +52,18 @@ func main() {
 		err = migration.Down()
 	case "status":
 		err = migration.Status()
-	case "create":
+	case "create:migration":
 		if *name == "" {
 			log.Fatal("Name is required for create command")
 		}
 		err = migration.Create(*name, *migType)
+	case "create:seed":
+		if *name == "" {
+			log.Fatal("Name is required for create command")
+		}
+		err = seed.Create(*name, *migType)
+	case "seed":
+		err = seed.Up()
 	default:
 		log.Fatalf("Unknown command: %s", *command)
 	}
