@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"trivium/internal/common/function"
+	"trivium/internal"
 
 	"github.com/joho/godotenv"
 )
@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("Erro ao iniciar o servidor: %v", err)
 	}
 
-	function.Bootstrap()
+	internal.Bootstrap()
 
 	if err := app.Server.Start(); err != nil {
 		log.Fatalf("Erro ao iniciar o servidor: %v", err)
