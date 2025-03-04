@@ -9,5 +9,6 @@ import (
 func Bootstrap() {
 	cryptoCurrencyRepo := pgRepo.NewCryptoCurrencyRepository()
 	cryptoHistoryRepo := influxRepo.NewCryptoHistoryRepository()
-	usecase.NewMonitorCryptoCurrencies(cryptoCurrencyRepo, cryptoHistoryRepo).WatchCrypto()
+	volumeRepo := influxRepo.NewVolumeRepository()
+	usecase.NewMonitorCryptoCurrencies(cryptoCurrencyRepo, cryptoHistoryRepo, volumeRepo).WatchCrypto()
 }
