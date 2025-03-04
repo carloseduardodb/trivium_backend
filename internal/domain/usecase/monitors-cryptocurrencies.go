@@ -1,17 +1,25 @@
 package usecase
 
 import (
+	"fmt"
 	"log"
+	"strconv"
+	"time"
+	"trivium/internal/domain/entity"
 	"trivium/internal/domain/repositorier"
 )
 
 type MonitorCryptoCurrencies struct {
 	cryptoCurrencyRepo repositorier.CryptoCurrencyRepositorier
+	cryptoHistory      repositorier.CryptoHistoryRepository
 }
 
-func NewMonitorCryptoCurrencies(cryptoCurrencyRepo repositorier.CryptoCurrencyRepositorier) *MonitorCryptoCurrencies {
+func NewMonitorCryptoCurrencies(
+	cryptoCurrencyRepo repositorier.CryptoCurrencyRepositorier,
+	cryptoHistory repositorier.CryptoHistoryRepository) *MonitorCryptoCurrencies {
 	return &MonitorCryptoCurrencies{
 		cryptoCurrencyRepo: cryptoCurrencyRepo,
+		cryptoHistory:      cryptoHistory,
 	}
 }
 
@@ -31,7 +39,17 @@ func (c *MonitorCryptoCurrencies) WatchCrypto() {
 
 	go func() {
 		for data := range dataChannel {
-			log.Printf("Criptomoeda: %s, Preço: %s, Volume: %s", data.Symbol, data.Price, data.Volume)
+			price, err := strconv.ParseFloat(data.Price, 64)
+			if err != nil {
+				fmt.Printf("Erro ao converter preço: %v", err)
+			}
+			c.cryptoHistory.Save(entity.CryptoHistory{
+				Name:      data.Symbol,
+				Price:     price,
+				Symbol:    data.Symbol,
+				CreatedAt: time.Now(),
+			})
+			// log.Printf("Criptomoeda: %s, Preço: %s, Volume: %s", data.Symbol, data.Price, data.Volume)
 		}
 	}()
 }
