@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"log"
 	"strconv"
 	"sync"
@@ -15,6 +16,24 @@ type CryptoStatusRepositoryImpl struct{}
 
 func NewCryptoRepository() repositorier.CryptoStatusRepository {
 	return &CryptoStatusRepositoryImpl{}
+}
+
+func (r *CryptoStatusRepositoryImpl) Get24hVolumes(cryptos []string) (map[string]string, error) {
+	client := binance.NewClient("", "")
+	stats, err := client.NewListPriceChangeStatsService().Do(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	volumes := make(map[string]string)
+	for _, stat := range stats {
+		for _, crypto := range cryptos {
+			if stat.Symbol == crypto {
+				volumes[stat.Symbol] = stat.Volume
+			}
+		}
+	}
+	return volumes, nil
 }
 
 func (r *CryptoStatusRepositoryImpl) StreamCryptoData(cryptos []string) <-chan repositorier.CryptoData {

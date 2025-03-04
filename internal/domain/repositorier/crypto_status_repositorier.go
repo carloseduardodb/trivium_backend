@@ -8,4 +8,5 @@ type CryptoData struct {
 
 type CryptoStatusRepository interface {
 	StreamCryptoData(cryptos []string) <-chan CryptoData
+	Get24hVolumes(cryptos []string) (map[string]string, error)
 }

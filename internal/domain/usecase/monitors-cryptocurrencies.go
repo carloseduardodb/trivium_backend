@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -11,20 +10,33 @@ import (
 
 type MonitorCryptoCurrencies struct {
 	cryptoCurrencyRepo repositorier.CryptoCurrencyRepositorier
-	cryptoHistory      repositorier.CryptoHistoryRepository
+	cryptoHistoryRepo  repositorier.CryptoHistoryRepository
+	volumeRepo         repositorier.VolumeRepository
 }
 
 func NewMonitorCryptoCurrencies(
 	cryptoCurrencyRepo repositorier.CryptoCurrencyRepositorier,
-	cryptoHistory repositorier.CryptoHistoryRepository) *MonitorCryptoCurrencies {
+	cryptoHistory repositorier.CryptoHistoryRepository,
+	volume repositorier.VolumeRepository,
+) *MonitorCryptoCurrencies {
 	return &MonitorCryptoCurrencies{
 		cryptoCurrencyRepo: cryptoCurrencyRepo,
-		cryptoHistory:      cryptoHistory,
+		cryptoHistoryRepo:  cryptoHistory,
+		volumeRepo:         volume,
 	}
+}
+
+func parseFloat(value string) float64 {
+	f, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return f
 }
 
 func (c *MonitorCryptoCurrencies) WatchCrypto() {
 	cryptoEvent := NewCryptoWatchEventUseCase()
+	cryptoVolume := NewCryptoVolumeUseCase()
 
 	var cryptoCurrencies, err = c.cryptoCurrencyRepo.FindAll()
 	if err != nil {
@@ -35,21 +47,40 @@ func (c *MonitorCryptoCurrencies) WatchCrypto() {
 		cryptos[i] = crypto.Symbol
 	}
 
+	volumes, err := cryptoVolume.Get24hVolumes(cryptos)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	dataChannel := cryptoEvent.WatchEvent(cryptos)
 
 	go func() {
-		for data := range dataChannel {
-			price, err := strconv.ParseFloat(data.Price, 64)
+		ticker := time.NewTicker(1 * time.Minute)
+		for range ticker.C {
+			volumes, err = cryptoVolume.Get24hVolumes(cryptos)
 			if err != nil {
-				fmt.Printf("Erro ao converter preço: %v", err)
+				log.Fatal(err)
 			}
-			c.cryptoHistory.Save(entity.CryptoHistory{
+
+			for symbol, volume := range volumes {
+				c.volumeRepo.Save(entity.Volume{
+					Name:      symbol,
+					Price:     parseFloat(volume),
+					Symbol:    symbol,
+					CreatedAt: time.Now(),
+				})
+			}
+		}
+	}()
+
+	go func() {
+		for data := range dataChannel {
+			c.cryptoHistoryRepo.Save(entity.CryptoHistory{
 				Name:      data.Symbol,
-				Price:     price,
+				Price:     parseFloat(data.Price),
 				Symbol:    data.Symbol,
 				CreatedAt: time.Now(),
 			})
-			// log.Printf("Criptomoeda: %s, Preço: %s, Volume: %s", data.Symbol, data.Price, data.Volume)
 		}
 	}()
 }
