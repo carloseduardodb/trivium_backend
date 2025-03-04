@@ -14,7 +14,7 @@ import (
 
 type CryptoHistoryRepositoryImpl struct{}
 
-func NewCryptoRepository() repositorier.CryptoHistoryRepository {
+func NewCryptoHistoryRepository() repositorier.CryptoHistoryRepository {
 	return &CryptoHistoryRepositoryImpl{}
 }
 
@@ -36,7 +36,6 @@ func (r *CryptoHistoryRepositoryImpl) Save(crypto entity.CryptoHistory) (entity.
 		return entity.CryptoHistory{}, err
 	}
 
-	fmt.Println("CryptoHistory inserido com sucesso!")
 	return crypto, nil
 }
 
@@ -81,7 +80,7 @@ func (r *CryptoHistoryRepositoryImpl) FindAll() ([]entity.CryptoHistory, error) 
 
 	query := fmt.Sprintf(`
 		from(bucket: "%s") 
-		|> range(start: -30d) 
+		|> range(start: -90d) 
 		|> filter(fn: (r) => r._measurement == "crypto_history")
 		|> sort(columns: ["_time"], desc: true)`, os.Getenv("INFLUXDB_BUCKET"))
 
@@ -106,6 +105,10 @@ func (r *CryptoHistoryRepositoryImpl) FindAll() ([]entity.CryptoHistory, error) 
 
 	if result.Err() != nil {
 		return nil, result.Err()
+	}
+
+	if len(cryptoList) == 0 {
+		fmt.Println("Nenhum dado encontrado para a consulta.")
 	}
 
 	return cryptoList, nil
