@@ -6,10 +6,10 @@ import (
 )
 
 type User struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	PhotoPath string `json:"photo_path"`
+	ID        int64  `json:"id" db:"id"`
+	Name      string `json:"name" db:"name"`
+	Email     string `json:"email" db:"email"`
+	PhotoPath string `json:"photo_path" db:"photo_path"`
 }
 
 func isValidEmail(email string) bool {
@@ -32,7 +32,7 @@ func NewUser(name string, email string, photoPath string) (*User, error) {
 	}
 
 	if photoPath == "" {
-		return nil, fmt.Errorf("photoPath is required")
+		photoPath = ""
 	}
 
 	return &User{

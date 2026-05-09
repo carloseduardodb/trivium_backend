@@ -10,17 +10,40 @@ import (
 	"trivium/cmd/app/di"
 	"trivium/internal/domain/usecase"
 	"trivium/internal/presentation/controller"
+	"trivium/internal/presentation/middleware"
 )
 
 // Injectors from wire.go:
 
 func initializeApp() (*App, error) {
 	authRepositorier := cmd.NewFirebaseRepository()
-	authUseCase := usecase.NewAuthUseCase(authRepositorier)
+	userRepositorier := cmd.NewUserRepository()
+	authUseCase := usecase.NewAuthUseCase(authRepositorier, userRepositorier)
 	authController := controller.NewAuthController(authUseCase)
 	statusController := controller.NewStatusController()
+	cryptoCurrencyRepositorier := cmd.NewCryptoCurrencyRepository()
+	cryptoCurrencyUseCase := usecase.NewCryptoCurrencyUseCase(cryptoCurrencyRepositorier)
+	verifyTokenRepositorier := cmd.NewVerifyTokenRepository()
+	auth := middleware.NewAuth(verifyTokenRepositorier, userRepositorier)
+	cryptoCurrencyController := controller.NewCryptoCurrencyController(cryptoCurrencyUseCase, auth)
+	positionRepositorier := cmd.NewPositionRepository()
+	positionUseCase := usecase.NewPositionUseCase(positionRepositorier, cryptoCurrencyRepositorier)
+	positionController := controller.NewPositionController(positionUseCase, auth)
+	profitTakeRepositorier := cmd.NewProfitTakeRepository()
+	profitTakeUseCase := usecase.NewProfitTakeUseCase(profitTakeRepositorier, positionRepositorier)
+	profitTakeController := controller.NewProfitTakeController(profitTakeUseCase, auth)
+	cryptoHistoryRepository := cmd.NewCryptoHistoryRepository()
+	portfolioUseCase := usecase.NewPortfolioUseCase(positionRepositorier, profitTakeRepositorier, cryptoHistoryRepository, cryptoCurrencyRepositorier)
+	portfolioController := controller.NewPortfolioController(portfolioUseCase, auth)
+	userController := controller.NewUserController(userRepositorier, auth)
+	volumeRepository := cmd.NewVolumeRepository()
+	cryptoHistoryController := controller.NewCryptoHistoryController(cryptoHistoryRepository, volumeRepository, auth)
+	priceAlertRepositorier := cmd.NewPriceAlertRepository()
+	priceAlertUseCase := usecase.NewPriceAlertUseCase(priceAlertRepositorier, cryptoCurrencyRepositorier)
+	priceAlertController := controller.NewPriceAlertController(priceAlertUseCase, auth)
+	wsCryptoController := controller.NewWsCryptoController(cryptoHistoryRepository)
 	httpRepositorier := cmd.NewHttpRepository()
-	appServer := cmd.NewAppServer(authController, statusController, httpRepositorier)
+	appServer := cmd.NewAppServer(authController, statusController, cryptoCurrencyController, positionController, profitTakeController, portfolioController, userController, cryptoHistoryController, priceAlertController, wsCryptoController, httpRepositorier)
 	app := &App{
 		Server: appServer,
 	}

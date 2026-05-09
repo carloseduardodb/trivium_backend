@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"fmt"
 	"time"
+
 	"trivium/internal/domain/entity"
 	"trivium/internal/domain/repositorier"
 	"trivium/internal/infra/database/postgres/connection"
@@ -15,7 +17,6 @@ func NewProfitTakeRepository() repositorier.ProfitTakeRepositorier {
 
 func (r *ProfitTakeRepository) Save(profitTake entity.ProfitTake) (entity.ProfitTake, error) {
 	db := connection.GetDB()
-	defer connection.CloseDB()
 
 	query := `INSERT INTO profit_takes (position, amount_withdrawn, price_at_withdraw, remaining_value, withdraw_date, created_at, updated_at) 
 			  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
@@ -37,7 +38,6 @@ func (r *ProfitTakeRepository) Save(profitTake entity.ProfitTake) (entity.Profit
 
 func (r *ProfitTakeRepository) FindById(id int64) (entity.ProfitTake, error) {
 	db := connection.GetDB()
-	defer connection.CloseDB()
 
 	var profitTake entity.ProfitTake
 	err := db.QueryRowx(`
@@ -54,7 +54,6 @@ func (r *ProfitTakeRepository) FindById(id int64) (entity.ProfitTake, error) {
 
 func (r *ProfitTakeRepository) FindAll() ([]entity.ProfitTake, error) {
 	db := connection.GetDB()
-	defer connection.CloseDB()
 
 	var profitTakes []entity.ProfitTake
 	err := db.Select(&profitTakes, `
@@ -69,9 +68,23 @@ func (r *ProfitTakeRepository) FindAll() ([]entity.ProfitTake, error) {
 	return profitTakes, nil
 }
 
+func (r *ProfitTakeRepository) FindByPositionId(positionId int64) ([]entity.ProfitTake, error) {
+	db := connection.GetDB()
+
+	var profitTakes []entity.ProfitTake
+	err := db.Select(&profitTakes, `
+		SELECT id, position, amount_withdrawn, price_at_withdraw, remaining_value, 
+		       withdraw_date, created_at, updated_at
+		FROM profit_takes WHERE position = $1`, positionId)
+	if err != nil {
+		return nil, err
+	}
+
+	return profitTakes, nil
+}
+
 func (r *ProfitTakeRepository) Update(profitTake entity.ProfitTake) (entity.ProfitTake, error) {
 	db := connection.GetDB()
-	defer connection.CloseDB()
 
 	query := `
 		UPDATE profit_takes 
@@ -100,8 +113,19 @@ func (r *ProfitTakeRepository) Update(profitTake entity.ProfitTake) (entity.Prof
 
 func (r *ProfitTakeRepository) Delete(id int64) error {
 	db := connection.GetDB()
-	defer connection.CloseDB()
 
-	_, err := db.Exec("DELETE FROM profit_takes WHERE id = $1", id)
-	return err
+	result, err := db.Exec("DELETE FROM profit_takes WHERE id = $1", id)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("profit take with id %d not found", id)
+	}
+
+	return nil
 }

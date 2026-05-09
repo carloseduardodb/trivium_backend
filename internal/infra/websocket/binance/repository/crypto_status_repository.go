@@ -37,8 +37,8 @@ func (r *CryptoStatusRepositoryImpl) Get24hVolumes(cryptos []string) (map[string
 }
 
 func (r *CryptoStatusRepositoryImpl) StreamCryptoData(cryptos []string) <-chan repositorier.CryptoData {
-	dataStream := make(chan repositorier.CryptoData)
-	ticker := time.NewTicker(1 * time.Second * 10)
+	dataStream := make(chan repositorier.CryptoData, 100)
+	ticker := time.NewTicker(10 * time.Second)
 	var mu sync.Mutex
 
 	cryptoMap := make(map[string]repositorier.CryptoData)
@@ -49,7 +49,7 @@ func (r *CryptoStatusRepositoryImpl) StreamCryptoData(cryptos []string) <-chan r
 
 		price, err := strconv.ParseFloat(event.Price, 64)
 		if err != nil {
-			log.Println("Erro ao converter preço:", err)
+			log.Println("Error converting price:", err)
 			return
 		}
 
@@ -63,31 +63,57 @@ func (r *CryptoStatusRepositoryImpl) StreamCryptoData(cryptos []string) <-chan r
 	}
 
 	errHandler := func(err error) {
-		log.Println("Erro no WebSocket:", err)
+		log.Println("WebSocket error:", err)
 	}
 
 	for _, crypto := range cryptos {
 		symbol := crypto + "USDT"
-
-		_, _, err := binance.WsAggTradeServe(symbol, wsHandler, errHandler)
-		if err != nil {
-			log.Printf("Erro ao conectar ao WebSocket da Binance para %s: %v\n", symbol, err)
-		}
+		go r.connectWithRetry(symbol, wsHandler, errHandler)
 	}
 
 	go func() {
 		defer ticker.Stop()
-		defer close(dataStream)
 		for range ticker.C {
 			mu.Lock()
 			for _, data := range cryptoMap {
-				dataStream <- data
+				select {
+				case dataStream <- data:
+				default:
+					// channel full, skip
+				}
 			}
 			mu.Unlock()
 		}
 	}()
 
-	log.Println("Conectado ao WebSocket da Binance para", cryptos)
+	log.Println("Connected to Binance WebSocket for", cryptos)
 
 	return dataStream
+}
+
+func (r *CryptoStatusRepositoryImpl) connectWithRetry(symbol string, wsHandler func(*binance.WsAggTradeEvent), errHandler func(error)) {
+	maxRetries := 10
+	baseDelay := 1 * time.Second
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		doneC, _, err := binance.WsAggTradeServe(symbol, wsHandler, errHandler)
+		if err != nil {
+			delay := baseDelay * time.Duration(1<<uint(attempt))
+			if delay > 60*time.Second {
+				delay = 60 * time.Second
+			}
+			log.Printf("WebSocket connection failed for %s (attempt %d/%d), retrying in %v: %v",
+				symbol, attempt+1, maxRetries, delay, err)
+			time.Sleep(delay)
+			continue
+		}
+
+		log.Printf("WebSocket connected for %s", symbol)
+		<-doneC
+		log.Printf("WebSocket disconnected for %s, reconnecting...", symbol)
+		attempt = 0
+		time.Sleep(2 * time.Second)
+	}
+
+	log.Printf("WebSocket max retries reached for %s", symbol)
 }

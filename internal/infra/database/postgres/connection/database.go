@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -36,6 +37,10 @@ func GetDB() *sqlx.DB {
 			log.Fatalf("Error when open connection with database: %v", err)
 		}
 
+		db.SetMaxOpenConns(25)
+		db.SetMaxIdleConns(10)
+		db.SetConnMaxLifetime(5 * time.Minute)
+
 		err = db.Ping()
 		if err != nil {
 			log.Fatalf("Error when verify connection with database: %v", err)
@@ -45,17 +50,6 @@ func GetDB() *sqlx.DB {
 	})
 
 	return instance
-}
-
-func ExecuteQuery(query string, args ...any) (*sqlx.Rows, error) {
-	db := GetDB()
-	defer CloseDB()
-
-	rows, err := db.Queryx(query, args...)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
 }
 
 func CloseDB() {

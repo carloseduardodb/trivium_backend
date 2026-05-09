@@ -8,5 +8,9 @@ import (
 
 var DomainModule = wire.NewSet(
 	usecase.NewAuthUseCase,
-	usecase.NewCryptoWatchEventUseCase,
+	usecase.NewCryptoCurrencyUseCase,
+	usecase.NewPositionUseCase,
+	usecase.NewProfitTakeUseCase,
+	usecase.NewPortfolioUseCase,
+	usecase.NewPriceAlertUseCase,
 )
