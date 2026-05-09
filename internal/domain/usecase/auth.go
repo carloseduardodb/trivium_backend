@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"trivium/internal/domain/entity"
 	"trivium/internal/domain/repositorier"
 	"trivium/internal/presentation/dto"
@@ -9,26 +8,36 @@ import (
 
 type AuthUseCase struct {
 	firebaseRepo repositorier.AuthRepositorier
+	userRepo     repositorier.UserRepositorier
 }
 
-func NewAuthUseCase(firebaseRepo repositorier.AuthRepositorier) *AuthUseCase {
+func NewAuthUseCase(firebaseRepo repositorier.AuthRepositorier, userRepo repositorier.UserRepositorier) *AuthUseCase {
 	return &AuthUseCase{
 		firebaseRepo: firebaseRepo,
+		userRepo:     userRepo,
 	}
 }
 
 func (a *AuthUseCase) Auth(auth *dto.Auth) (*entity.User, error) {
-	_, err := a.firebaseRepo.ConvertTokenInUser(auth.Token)
+	firebaseUser, err := a.firebaseRepo.ConvertTokenInUser(auth.Token)
 	if err != nil {
 		return nil, err
 	}
 
-	cUser, err := entity.NewUser("Carlos", "Yj6tZ@example.com", "photoPath")
+	existingUser, err := a.userRepo.FindByEmail(firebaseUser.Email)
+	if err == nil && existingUser != nil {
+		return existingUser, nil
+	}
+
+	newUser, err := entity.NewUser(firebaseUser.Name, firebaseUser.Email, firebaseUser.PhotoPath)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Print(cUser)
+	savedUser, err := a.userRepo.Save(*newUser)
+	if err != nil {
+		return nil, err
+	}
 
-	return cUser, nil
+	return &savedUser, nil
 }

@@ -36,7 +36,6 @@ func (r *VolumeRepositoryImpl) Save(volume entity.Volume) (entity.Volume, error)
 		return entity.Volume{}, err
 	}
 
-	fmt.Println("Volume inserido com sucesso!")
 	return volume, nil
 }
 
@@ -48,6 +47,7 @@ func (r *VolumeRepositoryImpl) FindBySymbol(symbol string) ([]entity.Volume, err
 		from(bucket: "%s")
 		|> range(start: -30d)
 		|> filter(fn: (r) => r._measurement == "volume" and r.symbol == "%s")
+		|> filter(fn: (r) => r._field == "price")
 		|> sort(columns: ["_time"], desc: true)
 	`, os.Getenv("INFLUXDB_BUCKET"), symbol)
 
@@ -58,7 +58,6 @@ func (r *VolumeRepositoryImpl) FindBySymbol(symbol string) ([]entity.Volume, err
 
 	var volumeList []entity.Volume
 	for result.Next() {
-		name, _ := result.Record().ValueByKey("name").(string)
 		price, _ := result.Record().Value().(float64)
 		volSymbol, _ := result.Record().ValueByKey("symbol").(string)
 		if volSymbol == "" {
@@ -66,7 +65,7 @@ func (r *VolumeRepositoryImpl) FindBySymbol(symbol string) ([]entity.Volume, err
 		}
 
 		volumeList = append(volumeList, entity.Volume{
-			Name:      name,
+			Name:      volSymbol,
 			Price:     price,
 			Symbol:    volSymbol,
 			CreatedAt: result.Record().Time(),
@@ -88,6 +87,7 @@ func (r *VolumeRepositoryImpl) FindAll() ([]entity.Volume, error) {
 		from(bucket: "%s")
 		|> range(start: -30d)
 		|> filter(fn: (r) => r._measurement == "volume")
+		|> filter(fn: (r) => r._field == "price")
 		|> sort(columns: ["_time"], desc: true)
 	`, os.Getenv("INFLUXDB_BUCKET"))
 
@@ -98,12 +98,11 @@ func (r *VolumeRepositoryImpl) FindAll() ([]entity.Volume, error) {
 
 	var volumeList []entity.Volume
 	for result.Next() {
-		name, _ := result.Record().ValueByKey("name").(string)
 		price, _ := result.Record().Value().(float64)
 		volSymbol, _ := result.Record().ValueByKey("symbol").(string)
 
 		volumeList = append(volumeList, entity.Volume{
-			Name:      name,
+			Name:      volSymbol,
 			Price:     price,
 			Symbol:    volSymbol,
 			CreatedAt: result.Record().Time(),

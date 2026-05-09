@@ -1,15 +1,19 @@
 package e2e
 
-// func TestSaveCryptoCurrency(t *testing.T) {
-// 	resp, err := http.Get(os.Getenv("HOST") + ":" + os.Getenv("PORT") + "/cryptocurrency")
+import (
+	"net/http"
+	"os"
+	"testing"
+)
 
-// 	if err != nil {
-// 		t.Fatalf("Erro ao fazer a requisição: %v", err)
-// 	}
-// 	defer resp.Body.Close()
+func TestGetCryptoCurrencies_Unauthorized(t *testing.T) {
+	resp, err := http.Get(os.Getenv("HOST") + ":" + os.Getenv("PORT") + "/cryptocurrencies")
+	if err != nil {
+		t.Fatalf("Error making request: %v", err)
+	}
+	defer resp.Body.Close()
 
-// 	if resp.StatusCode != http.StatusOK {
-// 		t.Errorf("Esperado status 200 OK, mas obteve %d", resp.StatusCode)
-// 	}
-
-// }
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("Expected status 401 Unauthorized, got %d", resp.StatusCode)
+	}
+}

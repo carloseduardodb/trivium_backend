@@ -3,12 +3,12 @@ package entity
 import "time"
 
 type ProfitTake struct {
-	ID              int64     `json:"id"`
-	Position        int64     `json:"position"`
-	AmountWithdrawn float64   `json:"amount_withdrawn"`
-	PriceAtWithdraw float64   `json:"price_at_withdraw"`
-	RemainingValue  float64   `json:"remaining_value"`
-	WithdrawDate    time.Time `json:"withdraw_date"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID              int64     `json:"id" db:"id"`
+	Position        int64     `json:"position" db:"position"`
+	AmountWithdrawn float64   `json:"amount_withdrawn" db:"amount_withdrawn"`
+	PriceAtWithdraw float64   `json:"price_at_withdraw" db:"price_at_withdraw"`
+	RemainingValue  float64   `json:"remaining_value" db:"remaining_value"`
+	WithdrawDate    time.Time `json:"withdraw_date" db:"withdraw_date"`
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
 }

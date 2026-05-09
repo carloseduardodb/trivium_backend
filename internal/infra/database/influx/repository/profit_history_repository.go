@@ -39,7 +39,6 @@ func (r *ProfitHistoryRepositoryImpl) Save(profit entity.ProfitHistory) (entity.
 		return entity.ProfitHistory{}, err
 	}
 
-	fmt.Println("ProfitHistory inserido com sucesso!")
 	return profit, nil
 }
 
@@ -51,6 +50,7 @@ func (r *ProfitHistoryRepositoryImpl) FindBySymbol(symbol string) ([]entity.Prof
 		from(bucket: "%s") 
 		|> range(start: -30d) 
 		|> filter(fn: (r) => r._measurement == "profit_history" and r.symbol == "%s")
+		|> filter(fn: (r) => r._field == "profit")
 		|> sort(columns: ["_time"], desc: true)`, os.Getenv("INFLUXDB_BUCKET"), symbol)
 
 	result, err := queryAPI.Query(context.Background(), query)
@@ -60,18 +60,16 @@ func (r *ProfitHistoryRepositoryImpl) FindBySymbol(symbol string) ([]entity.Prof
 
 	var profitList []entity.ProfitHistory
 	for result.Next() {
-		cryptoPrice, _ := result.Record().ValueByKey("crypto_price").(float64)
-		profit, _ := result.Record().ValueByKey("profit").(float64)
+		profit, _ := result.Record().Value().(float64)
 		userIDStr, _ := result.Record().ValueByKey("user_id").(string)
 		var userID int64
 		fmt.Sscanf(userIDStr, "%d", &userID)
 
 		profitList = append(profitList, entity.ProfitHistory{
-			Symbol:      symbol,
-			CryptoPrice: cryptoPrice,
-			UserId:      userID,
-			Profit:      profit,
-			CreatedAt:   result.Record().Time(),
+			Symbol:    symbol,
+			UserId:    userID,
+			Profit:    profit,
+			CreatedAt: result.Record().Time(),
 		})
 	}
 
@@ -90,6 +88,7 @@ func (r *ProfitHistoryRepositoryImpl) FindAll() ([]entity.ProfitHistory, error) 
 		from(bucket: "%s") 
 		|> range(start: -30d) 
 		|> filter(fn: (r) => r._measurement == "profit_history")
+		|> filter(fn: (r) => r._field == "profit")
 		|> sort(columns: ["_time"], desc: true)`, os.Getenv("INFLUXDB_BUCKET"))
 
 	result, err := queryAPI.Query(context.Background(), query)
@@ -99,19 +98,17 @@ func (r *ProfitHistoryRepositoryImpl) FindAll() ([]entity.ProfitHistory, error) 
 
 	var profitList []entity.ProfitHistory
 	for result.Next() {
-		cryptoPrice, _ := result.Record().ValueByKey("crypto_price").(float64)
-		profit, _ := result.Record().ValueByKey("profit").(float64)
+		profit, _ := result.Record().Value().(float64)
 		symbol, _ := result.Record().ValueByKey("symbol").(string)
 		userIDStr, _ := result.Record().ValueByKey("user_id").(string)
 		var userID int64
 		fmt.Sscanf(userIDStr, "%d", &userID)
 
 		profitList = append(profitList, entity.ProfitHistory{
-			Symbol:      symbol,
-			CryptoPrice: cryptoPrice,
-			UserId:      userID,
-			Profit:      profit,
-			CreatedAt:   result.Record().Time(),
+			Symbol:    symbol,
+			UserId:    userID,
+			Profit:    profit,
+			CreatedAt: result.Record().Time(),
 		})
 	}
 

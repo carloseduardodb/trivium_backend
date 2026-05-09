@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+
 	"trivium/internal/domain/usecase"
 	"trivium/internal/presentation/dto"
 	"trivium/internal/presentation/middleware"
@@ -10,8 +11,7 @@ import (
 )
 
 type AuthController struct {
-	authUsecase    *usecase.AuthUseCase
-	authMiddleware middleware.Auth
+	authUsecase *usecase.AuthUseCase
 }
 
 func NewAuthController(authUsecase *usecase.AuthUseCase) *AuthController {
@@ -22,9 +22,6 @@ func NewAuthController(authUsecase *usecase.AuthUseCase) *AuthController {
 
 func (a *AuthController) SetupRoutes(router presentation_repositorier.HttpRepositorier) {
 	router.HandleFunc("/auth", middleware.JsonMiddleware(a.Auth, &dto.Auth{}), http.MethodPost)
-
-	protected := router.SubRouter("/auth")
-	protected.Use(a.authMiddleware.AuthMiddleware())
 }
 
 func (c *AuthController) Auth(input interface{}) (interface{}, error) {

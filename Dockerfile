@@ -2,25 +2,23 @@ FROM golang:1.21 AS builder
 
 WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY . .
 
-RUN go build -o backend ./cmd/main.go
-
-FROM node:lts AS frontend-builder
-WORKDIR /frontend
-COPY public/package.json ./
-COPY public/yarn.lock ./
-RUN npm install
-COPY public ./
-RUN npm run build
+RUN CGO_ENABLED=0 GOOS=linux go build -o backend ./cmd/app/main.go
 
 FROM alpine:latest
 
-COPY --from=builder /app/backend ./
+RUN apk --no-cache add ca-certificates
 
-COPY --from=frontend-builder /frontend/dist ./public
+WORKDIR /app
 
-EXPOSE 8080
+COPY --from=builder /app/backend .
+COPY --from=builder /app/.env.example .env
+COPY --from=builder /app/config ./config
+
 EXPOSE 3000
 
 CMD ["./backend"]

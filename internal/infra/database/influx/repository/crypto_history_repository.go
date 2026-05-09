@@ -47,6 +47,7 @@ func (r *CryptoHistoryRepositoryImpl) FindBySymbol(symbol string) ([]entity.Cryp
 		from(bucket: "%s") 
 		|> range(start: -30d) 
 		|> filter(fn: (r) => r._measurement == "crypto_history" and r.symbol == "%s")
+		|> filter(fn: (r) => r._field == "price")
 		|> sort(columns: ["_time"], desc: true)`, os.Getenv("INFLUXDB_BUCKET"), symbol)
 
 	result, err := queryAPI.Query(context.Background(), query)
@@ -56,11 +57,10 @@ func (r *CryptoHistoryRepositoryImpl) FindBySymbol(symbol string) ([]entity.Cryp
 
 	var cryptoList []entity.CryptoHistory
 	for result.Next() {
-		name, _ := result.Record().ValueByKey("name").(string)
 		price, _ := result.Record().Value().(float64)
 
 		cryptoList = append(cryptoList, entity.CryptoHistory{
-			Name:      name,
+			Name:      symbol,
 			Price:     price,
 			Symbol:    symbol,
 			CreatedAt: result.Record().Time(),
@@ -82,6 +82,7 @@ func (r *CryptoHistoryRepositoryImpl) FindAll() ([]entity.CryptoHistory, error) 
 		from(bucket: "%s") 
 		|> range(start: -90d) 
 		|> filter(fn: (r) => r._measurement == "crypto_history")
+		|> filter(fn: (r) => r._field == "price")
 		|> sort(columns: ["_time"], desc: true)`, os.Getenv("INFLUXDB_BUCKET"))
 
 	result, err := queryAPI.Query(context.Background(), query)
@@ -91,12 +92,11 @@ func (r *CryptoHistoryRepositoryImpl) FindAll() ([]entity.CryptoHistory, error) 
 
 	var cryptoList []entity.CryptoHistory
 	for result.Next() {
-		name, _ := result.Record().ValueByKey("name").(string)
 		price, _ := result.Record().Value().(float64)
 		symbol, _ := result.Record().ValueByKey("symbol").(string)
 
 		cryptoList = append(cryptoList, entity.CryptoHistory{
-			Name:      name,
+			Name:      symbol,
 			Price:     price,
 			Symbol:    symbol,
 			CreatedAt: result.Record().Time(),
@@ -105,10 +105,6 @@ func (r *CryptoHistoryRepositoryImpl) FindAll() ([]entity.CryptoHistory, error) 
 
 	if result.Err() != nil {
 		return nil, result.Err()
-	}
-
-	if len(cryptoList) == 0 {
-		fmt.Println("Nenhum dado encontrado para a consulta.")
 	}
 
 	return cryptoList, nil
